@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Typing Practice</title>
+<style>
+  :root {
+    --bg: #14161c;
+    --card: #1e222b;
+    --text: #8a93a6;
+    --main: #f5c542;
+    --correct: #e8ecf3;
+    --wrong: #ff5c6c;
+    --border: #2c323e;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--correct);
+    font-family: "Segoe UI", system-ui, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
+
+  .container {
+    width: 100%;
+    max-width: 860px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    box-shadow: 0 10px 40px rgba(0,0,0,.4);
+  }
+
+  h1 { font-size: 1.6rem; color: var(--main); margin-bottom: 4px; }
+  .sub { color: var(--text); font-size: .9rem; margin-bottom: 20px; }
+
+  .page { display: none; }
+  .page.active { display: block; }
+
+  .intro {
+    text-align: center;
+    padding: 30px 10px;
+  }
+
+  .intro h1 {
+    font-size: 2.2rem;
+    margin-bottom: 12px;
+  }
+
+  .intro p {
+    color: var(--text);
+    max-width: 560px;
+    margin: 0 auto 28px;
+    line-height: 1.6;
+  }
+
+  .start-btn {
+    background: var(--main);
+    color: #14161c;
+    border: none;
+    padding: 14px 30px;
+    font-size: 1rem;
+    font-weight: 700;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: .2s;
+  }
+
+  .start-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(245,197,66,.25);
+  }
+
+  .controls {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  .controls span {
+    color: var(--text);
+    font-size: .85rem;
+  }
+
+  .btn {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 7px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: .85rem;
+    transition: .2s;
+  }
+
+  .btn:hover {
+    color: var(--correct);
+    border-color: var(--text);
+  }
+
+  .btn.active {
+    background: var(--main);
+    color: #14161c;
+    border-color: var(--main);
+    font-weight: 600;
+  }
+
+  .stats {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .stat {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    text-align: center;
+  }
+
+  .stat .val {
+    font-size: 1.7rem;
+    font-weight: 700;
+    color: var(--main);
+  }
+
+  .stat .lbl {
+    font-size: .75rem;
+    color: var(--text);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .progress {
+    height: 4px;
+    background: var(--border);
+    border-radius: 4px;
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+
+  .progress div {
+    height: 100%;
+    width: 100%;
+    background: var(--main);
+    transition: width 1s linear;
+  }
+
+  .text-box {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px;
+    font-family: "Courier New", monospace;
+    font-size: 1.35rem;
+    line-height: 2;
+    color: var(--text);
+    user-select: none;
+    min-height: 170px;
+    max-height: 260px;
+    overflow: hidden;
+    cursor: text;
+  }
+
+  .text-box span { position: relative; }
+  .text-box .correct { color: var(--correct); }
+
+  .text-box .wrong {
+    color: var(--wrong);
+    background: rgba(255,92,108,.15);
+    border-radius: 3px;
+  }
+
+  .text-box .current::before {
+    content: "";
+    position: absolute;
+    left: -1px;
+    top: 15%;
+    width: 2px;
+    height: 70%;
+    background: var(--main);
+    animation: blink 1s infinite;
+  }
+
+  @keyframes blink { 50% { opacity: 0; } }
+
+  #hiddenInput {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .hint {
+    text-align: center;
+    color: var(--text);
+    font-size: .85rem;
+    margin-top: 14px;
+  }
+
+  .hint kbd {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    padding: 2px 7px;
+    border-radius: 5px;
+  }
+
+  .result {
+    display: none;
+    text-align: center;
+    margin-top: 20px;
+    padding: 20px;
+    border: 1px dashed var(--main);
+    border-radius: 12px;
+  }
+
+  .result h2 {
+    color: var(--main);
+    margin-bottom: 8px;
+  }
+
+  .result p {
+    color: var(--text);
+    margin-bottom: 14px;
+  }
+
+  .back-link {
+    display: inline-block;
+    margin-bottom: 18px;
+    color: var(--text);
+    text-decoration: none;
+    font-size: .9rem;
+  }
+
+  .back-link:hover { color: var(--main); }
+
+  @media (max-width: 600px) {
+    .text-box { font-size: 1.1rem; }
+    .stat .val { font-size: 1.3rem; }
+    .intro h1 { font-size: 1.7rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- Intro / Home Page -->
+  <section id="introPage" class="page active">
+    <div class="intro">
+      <h1>⌨️ Welcome to Typing Practice</h1>
+      <p>
+        Improve your typing speed and accuracy with timed practice sessions.
+        Choose from easy, medium, or hard word levels and track your WPM,
+        accuracy, and errors in real time.
+      </p>
+
+      <button class="start-btn" onclick="showPage('typingPage')">
+        Start Typing Practice →
+      </button>
+    </div>
+  </section>
+
+  <!-- Typing Practice Page -->
+  <section id="typingPage" class="page">
+    <a href="#" class="back-link" onclick="showPage('introPage'); return false;">
+      ← Back to Home
+    </a>
+
+    <h1>⌨️ Typing Practice</h1>
+    <p class="sub">Click the text box and start typing. The timer begins on your first key.</p>
+
+    <div class="controls">
+      <span>Time:</span>
+      <button class="btn time-btn" data-time="15">15s</button>
+      <button class="btn time-btn active" data-time="30">30s</button>
+      <button class="btn time-btn" data-time="60">60s</button>
+      <button class="btn time-btn" data-time="120">120s</button>
+
+      <span style="margin-left:12px">Level:</span>
+      <button class="btn level-btn active" data-level="easy">Easy</button>
+      <button class="btn level-btn" data-level="medium">Medium</button>
+      <button class="btn level-btn" data-level="hard">Hard</button>
+    </div>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="val" id="timeLeft">30</div>
+        <div class="lbl">Seconds</div>
+      </div>
+      <div class="stat">
+        <div class="val" id="wpm">0</div>
+        <div class="lbl">WPM</div>
+      </div>
+      <div class="stat">
+        <div class="val" id="accuracy">100%</div>
+        <div class="lbl">Accuracy</div>
+      </div>
+      <div class="stat">
+        <div class="val" id="errors">0</div>
+        <div class="lbl">Errors</div>
+      </div>
+    </div>
+
+    <div class="progress"><div id="bar"></div></div>
+
+    <div class="text-box" id="textBox"></div>
+    <input type="text" id="hiddenInput" autocomplete="off" autocapitalize="off" spellcheck="false">
+
+    <p class="hint">Press <kbd>Tab</kbd> or <kbd>Esc</kbd> to restart</p>
+
+    <div class="result" id="result">
+      <h2>Time's up! 🎉</h2>
+      <p id="resultText"></p>
+      <button class="btn active" id="retryBtn">Try Again</button>
+    </div>
+  </section>
+
+</div>
+
+<script>
+  function showPage(pageId) {
+    document.querySelectorAll(".page").forEach(page => {
+      page.classList.remove("active");
+    });
+
+    document.getElementById(pageId).classList.add("active");
+
+    if (pageId === "typingPage") {
+      init();
+    }
+  }
+
+  const words = {
+    easy: "the be to of and a in that have it for not on with he as you do at this but his by from they we say her she or an will my one all would there their what so up out if about who get which go me when make can like time no just him know take people into year your good some could them see other than then now look only come its over think also back after use two how our work first well way even new want because any these give day most us".split(" "),
+
+    medium: "about above across action address advance against already always amount animal another answer around balance because become before begin behind believe better between bridge bright brother camera captain careful center change charge choice circle city class clean clear close coffee color common company control corner country course create cross danger decide desert detail dinner doctor double dream during early earth eight energy engine enough every example family father field figure final flower follow forest friend garden gather happy heavy history holiday hundred island journey kitchen language letter machine market memory mirror modern morning mountain music nature number ocean office orange paper parent people picture planet pocket prepare problem purple question quiet reason river school science season simple silver spring street summer system teacher thought together travel village weather window winter wonder yellow".split(" "),
+
+    hard: "accommodate achievement acknowledge acquaintance beautiful bureaucracy catastrophe circumstance communicate conscientious correspondence deliberately demonstrate development discrimination embarrassment entrepreneur environment extraordinary fluorescent fundamental guarantee hierarchy immediately independent infrastructure intelligence jurisdiction knowledge laboratory legitimate maintenance miscellaneous necessary neighborhood occasionally opportunity parliament perseverance phenomenon pronunciation questionnaire recommendation responsibility restaurant significant sophisticated subsequent supersede technology temperature unfortunately vocabulary Wednesday simultaneously psychology particularly mathematics synchronize quarantine rhythm".split(" ")
+  };
+
+  const textBox = document.getElementById("textBox");
+  const input = document.getElementById("hiddenInput");
+  const timeEl = document.getElementById("timeLeft");
+  const wpmEl = document.getElementById("wpm");
+  const accEl = document.getElementById("accuracy");
+  const errEl = document.getElementById("errors");
+  const bar = document.getElementById("bar");
+  const result = document.getElementById("result");
+  const resultText = document.getElementById("resultText");
+
+  let duration = 30, level = "easy";
+  let timeLeft = duration, timer = null, started = false, finished = false;
+  let chars = [], index = 0, errors = 0, totalTyped = 0;
+
+  function generateText() {
+    const list = words[level];
+    const out = [];
+
+    for (let i = 0; i < 80; i++) {
+      out.push(list[Math.floor(Math.random() * list.length)]);
+    }
+
+    return out.join(" ");
+  }
+
+  function init() {
+    clearInterval(timer);
+    started = false;
+    finished = false;
+    timeLeft = duration;
+    index = 0;
+    errors = 0;
+    totalTyped = 0;
+
+    timeEl.textContent = duration;
+    wpmEl.textContent = 0;
+    accEl.textContent = "100%";
+    errEl.textContent = 0;
+
+    bar.style.transition = "none";
+    bar.style.width = "100%";
+
+    result.style.display = "none";
+    input.value = "";
+    input.disabled = false;
+
+    textBox.innerHTML = "";
+
+    generateText().split("").forEach(ch => {
+      const s = document.createElement("span");
+      s.textContent = ch;
+      textBox.appendChild(s);
+    });
+
+    chars = textBox.querySelectorAll("span");
+    chars[0].classList.add("current");
+    textBox.scrollTop = 0;
+    input.focus();
+  }
+
+  function startTimer() {
+    started = true;
+    bar.style.transition = "width 1s linear";
+
+    timer = setInterval(() => {
+      timeLeft--;
+      timeEl.textContent = timeLeft;
+      bar.style.width = (timeLeft / duration * 100) + "%";
+      updateStats();
+
+      if (timeLeft <= 0) finish();
+    }, 1000);
+  }
+
+  function updateStats() {
+    const elapsed = (duration - timeLeft) / 60;
+    const correctChars = totalTyped - errors;
+    const wpm = elapsed > 0 ? Math.round((correctChars / 5) / elapsed) : 0;
+    const acc = totalTyped > 0 ? Math.round((correctChars / totalTyped) * 100) : 100;
+
+    wpmEl.textContent = Math.max(wpm, 0);
+    accEl.textContent = acc + "%";
+    errEl.textContent = errors;
+  }
+
+  function finish() {
+    clearInterval(timer);
+    finished = true;
+    input.disabled = true;
+    updateStats();
+
+    resultText.textContent =
+      `Speed: ${wpmEl.textContent} WPM | Accuracy: ${accEl.textContent} | Errors: ${errors}`;
+
+    result.style.display = "block";
+  }
+
+  function handleKey(e) {
+    if (e.key === "Tab" || e.key === "Escape") {
+      e.preventDefault();
+      init();
+      return;
+    }
+
+    if (finished) return;
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+    if (e.key === "Backspace") {
+      e.preventDefault();
+
+      if (index > 0) {
+        chars[index].classList.remove("current");
+        index--;
+
+        if (chars[index].classList.contains("wrong")) errors--;
+
+        totalTyped--;
+        chars[index].classList.remove("correct", "wrong");
+        chars[index].classList.add("current");
+        updateStats();
+      }
+
+      return;
+    }
+
+    if (e.key.length !== 1) return;
+
+    e.preventDefault();
+
+    if (!started) startTimer();
+
+    chars[index].classList.remove("current");
+    totalTyped++;
+
+    if (e.key === chars[index].textContent) {
+      chars[index].classList.add("correct");
+    } else {
+      chars[index].classList.add("wrong");
+      errors++;
+    }
+
+    index++;
+
+    if (index >= chars.length) {
+      finish();
+      return;
+    }
+
+    chars[index].classList.add("current");
+
+    const cur = chars[index];
+    const offset = cur.offsetTop - textBox.offsetTop;
+
+    if (offset > 80) {
+      textBox.scrollTop = offset - 60;
+    }
+
+    updateStats();
+  }
+
+  input.addEventListener("keydown", handleKey);
+  textBox.addEventListener("click", () => input.focus());
+
+  document.addEventListener("keydown", e => {
+    if ((e.key === "Tab" || e.key === "Escape") && document.activeElement !== input) {
+      e.preventDefault();
+      init();
+    }
+  });
+
+  document.getElementById("retryBtn").addEventListener("click", init);
+
+  document.querySelectorAll(".time-btn").forEach(b => {
+    b.addEventListener("click", () => {
+      document.querySelectorAll(".time-btn").forEach(x => x.classList.remove("active"));
+      b.classList.add("active");
+      duration = parseInt(b.dataset.time);
+      init();
+    });
+  });
+
+  document.querySelectorAll(".level-btn").forEach(b => {
+    b.addEventListener("click", () => {
+      document.querySelectorAll(".level-btn").forEach(x => x.classList.remove("active"));
+      b.classList.add("active");
+      level = b.dataset.level;
+      init();
+    });
+  });
+
+  init();
+</script>
+
+</body>
+</html>
